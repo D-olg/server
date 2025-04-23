@@ -4,7 +4,9 @@ import com.coursework.server.app.dto.*;
 import com.coursework.server.app.model.User;
 import com.coursework.server.app.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 
 @RestController
@@ -12,9 +14,11 @@ import java.time.LocalDateTime;
 public class UserController {
 
     private final UserService service;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserService service) {
+    public UserController(UserService service, PasswordEncoder passwordEncoder) {
         this.service = service;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
@@ -25,10 +29,10 @@ public class UserController {
 
         User user = new User();
         user.setUsername(registerDTO.getUsername());
-        user.setPassword(registerDTO.getPassword());
+        user.setPassword(passwordEncoder.encode(registerDTO.getPassword())); // ХЭШИРОВАНИЕ
         user.setEmail(registerDTO.getEmail());
         user.setCreatedAt(LocalDateTime.now());
-        user.setRole(0);
+        user.setRole(0); // Обычный пользователь
 
         service.saveUser(user);
         return ResponseEntity.ok("User registered successfully");
@@ -37,8 +41,10 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginDTO loginDTO) {
         User user = service.findByUsername(loginDTO.getUsername());
-        if (user != null && user.getPassword().equals(loginDTO.getPassword())) {
-            return ResponseEntity.ok("Login successful");
+
+        if (user != null && passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+            String role = (user.getRole() == 1) ? "admin" : "user";
+            return ResponseEntity.ok("Login successful. Role: " + role);
         } else {
             return ResponseEntity.status(401).body("Invalid username or password");
         }
@@ -48,7 +54,13 @@ public class UserController {
     public ResponseEntity<String> test() {
         return ResponseEntity.ok("Server is working");
     }
+
+    @GetMapping("/admin-test")
+    public ResponseEntity<String> adminTest(@RequestParam String username) {
+        User user = service.findByUsername(username);
+        if (user != null && user.getRole() == 1) {
+            return ResponseEntity.ok("Hello Admin: " + user.getUsername());
+        }
+        return ResponseEntity.status(403).body("Access denied: Admins only");
+    }
 }
-
-
-
