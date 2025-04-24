@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/user")
-public class UserController {
+@RequestMapping("/api/auth")
+public class AuthController {
 
     private final UserService service;
     private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserService service, PasswordEncoder passwordEncoder) {
+    public AuthController(UserService service, PasswordEncoder passwordEncoder) {
         this.service = service;
         this.passwordEncoder = passwordEncoder;
     }
@@ -43,12 +43,18 @@ public class UserController {
         User user = service.findByUsername(loginDTO.getUsername());
 
         if (user != null && passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+            // Обновляем время последнего входа и статус
+            user.setLastLogin(LocalDateTime.now());
+            user.setOnlineStatus(true);
+            service.saveUser(user); // сохраняем изменения
+
             String role = (user.getRole() == 1) ? "admin" : "user";
             return ResponseEntity.ok("Login successful. Role: " + role);
         } else {
             return ResponseEntity.status(401).body("Invalid username or password");
         }
     }
+
 
     @GetMapping("/test")
     public ResponseEntity<String> test() {
