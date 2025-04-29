@@ -26,10 +26,12 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
 
+        String role = "ROLE_" + user.getRole(); // Например, ROLE_1 или ROLE_0
+
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
-                user.getPassword(), // пароль из базы (BCrypt-хэш)
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                user.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority(role))
         );
     }
 }

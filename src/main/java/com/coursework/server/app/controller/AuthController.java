@@ -13,17 +13,17 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserService service;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserService service, PasswordEncoder passwordEncoder) {
-        this.service = service;
+        this.userService = service;
         this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterDTO registerDTO) {
-        if (service.userExists(registerDTO.getEmail())) {
+        if (userService.userExists(registerDTO.getEmail())) {
             return ResponseEntity.badRequest().body("User already exists");
         }
 
@@ -34,19 +34,19 @@ public class AuthController {
         user.setCreatedAt(LocalDateTime.now());
         user.setRole(0); // Обычный пользователь
 
-        service.saveUser(user);
+        userService.saveUser(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginDTO loginDTO) {
-        User user = service.findByUsername(loginDTO.getUsername());
+        User user = userService.findByUsername(loginDTO.getUsername());
 
         if (user != null && passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             // Обновляем время последнего входа и статус
             user.setLastLogin(LocalDateTime.now());
             user.setOnlineStatus(true);
-            service.saveUser(user); // сохраняем изменения
+            userService.saveUser(user); // сохраняем изменения
 
             String role = (user.getRole() == 1) ? "admin" : "user";
             return ResponseEntity.ok("Login successful. Role: " + role);
@@ -63,7 +63,7 @@ public class AuthController {
 
     @GetMapping("/admin-test")
     public ResponseEntity<String> adminTest(@RequestParam String username) {
-        User user = service.findByUsername(username);
+        User user = userService.findByUsername(username);
         if (user != null && user.getRole() == 1) {
             return ResponseEntity.ok("Hello Admin: " + user.getUsername());
         }

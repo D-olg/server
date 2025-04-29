@@ -30,6 +30,28 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        return userRepository.findAll(); // Получаем всех пользователей
+        return userRepository.findAll();
+    }
+
+    public boolean updateUser(Long id, User updatedUser) {
+        return userRepository.findById(id).map(existingUser -> {
+            existingUser.setUsername(updatedUser.getUsername());
+            existingUser.setEmail(updatedUser.getEmail());
+            existingUser.setRole(updatedUser.getRole());
+            existingUser.setOnlineStatus(updatedUser.getOnlineStatus());
+            existingUser.setLastLogin(updatedUser.getLastLogin());
+            userRepository.save(existingUser);
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean deleteUser(Long id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        } else {
+            return false;
+        }
     }
 }
+

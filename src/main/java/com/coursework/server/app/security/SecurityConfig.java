@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .securityMatcher("/api/**") // Только API маршруты
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll() // Логин и регистрация разрешены
-                        .requestMatchers("/api/admin/**").permitAll() // Админ-страницы только для пользователей с ролью ADMIN
+                        .requestMatchers("/api/admin/**").hasRole("1") // Админ-страницы только для пользователей с ролью ADMIN
                         .anyRequest().authenticated() // Все остальные маршруты требуют аутентификацию
                 )
                 .httpBasic(Customizer.withDefaults()) // Ожидаем базовую аутентификацию
