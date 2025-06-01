@@ -26,7 +26,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
 
-        String role = "ROLE_" + user.getRole(); // Например, ROLE_1 или ROLE_0
+        // Преобразуем роль 1 в ADMIN, 0 в USER
+        String role = "ROLE_" + (user.getRole() == 1 ? "ADMIN" : "USER");
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),

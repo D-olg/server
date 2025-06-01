@@ -1,36 +1,38 @@
 package com.coursework.server.app.controller;
 
 import com.coursework.server.app.model.Company;
+import com.coursework.server.app.model.User;
 import com.coursework.server.app.service.CompanyService;
+import com.coursework.server.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/companies")
-@CrossOrigin // Если клиент будет запускаться отдельно
+@RequestMapping("api/company")
 public class CompanyController {
 
-    private final CompanyService companyService;
+    @Autowired
+    private CompanyService companyService;
 
     @Autowired
-    public CompanyController(CompanyService companyService) {
-        this.companyService = companyService;
+    private UserService userService;
+
+    @GetMapping("/current")
+    public ResponseEntity<Company> getCompanyForCurrentUser(Principal principal) {
+        User user = userService.findByUsername(principal.getName());
+
+        Company company = companyService.getCompanyByUserId(user.getId());
+        return company != null ? ResponseEntity.ok(company) : ResponseEntity.notFound().build();
     }
 
-    @GetMapping
-    public List<Company> getAllCompanies() {
-        return companyService.getAllCompanies();
-    }
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Void> updateCompany(@PathVariable int id, @RequestBody Company updatedCompany, Principal principal) {
+        User user = userService.findByUsername(principal.getName());
 
-    @GetMapping("/user/{userId}")
-    public List<Company> getCompaniesByUserId(@PathVariable Long userId) {
-        return companyService.getCompaniesByUserId(userId);
-    }
-
-    @PostMapping
-    public Company createCompany(@RequestBody Company company) {
-        return companyService.createCompany(company);
+        boolean success = companyService.updateUserCompany(updatedCompany);
+        return success ? ResponseEntity.ok().build() : ResponseEntity.badRequest().build();
     }
 }
